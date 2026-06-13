@@ -1,0 +1,27 @@
+steps:
+  # 1. Build Docker image with VITE_API_URL substitution argument
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '--build-arg', 'VITE_API_URL=${_API_URL}',
+      '-t', 'gcr.io/${PROJECT_ID}/greensteps-web',
+      '.'
+    ]
+  
+  # 2. Push Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${PROJECT_ID}/greensteps-web']
+  
+  # 3. Deploy image to Google Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args: [
+      'run', 'deploy', 'greensteps-web',
+      '--image', 'gcr.io/${PROJECT_ID}/greensteps-web',
+      '--region', 'asia-south1',
+      '--platform', 'managed',
+      '--allow-unauthenticated'
+    ]
+
+images:
+  - 'gcr.io/${PROJECT_ID}/greensteps-web'

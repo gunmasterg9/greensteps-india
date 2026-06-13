@@ -1,0 +1,112 @@
+name: GreenSteps India - CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: greensteps-india-xxxx # Replace with your GCP project ID
+  GAR_LOCATION: asia-south1 # GCP Region (Mumbai)
+  SERVICE_NAME: greensteps-api # Cloud Run service name for backend
+  CLIENT_SERVICE_NAME: greensteps-web # Cloud Run service name for frontend
+
+jobs:
+  test-and-build:
+    name: Lint, Test, and Compile Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # Backend Checks
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          npm ci
+
+      # Frontend Checks
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Compile Frontend Static Build
+        run: |
+          cd frontend
+          npm run build
+        env:
+          VITE_API_URL: https://api.greensteps.in/api/v1 # Replace with production API url
+
+  deploy-to-gcp:
+    name: Build Docker Images & Deploy to Cloud Run
+    needs: test-and-build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Google Cloud Identity Federation
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }} # Set GCP Service Account Key in Repo Secrets
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Authenticate Docker against GAR
+      - name: Authenticate Docker
+        run: |
+          gcloud auth configure-docker ${GAR_LOCATION}-docker.pkg.dev
+
+      # 1. Build and Push Backend API Service
+      - name: Build and Push Backend Image
+        run: |
+          docker build -t ${GAR_LOCATION}-docker.pkg.dev/${{ env.PROJECT_ID }}/greensteps/${{ env.SERVICE_NAME }}:${{ github.sha }} ./backend
+          docker push ${GAR_LOCATION}-docker.pkg.dev/${{ env.PROJECT_ID }}/greensteps/${{ env.SERVICE_NAME }}:${{ github.sha }}
+
+      - name: Deploy Backend Service to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.GAR_LOCATION }}
+          image: ${GAR_LOCATION}-docker.pkg.dev/${{ env.PROJECT_ID }}/greensteps/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          env_vars: |
+            NODE_ENV=production
+            PORT=5000
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            MONGO_URI=${{ secrets.MONGO_URI }}
+            FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+            FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
+            FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
+
+      # 2. Build and Push Frontend Nginx Web Server
+      - name: Build and Push Frontend Image
+        run: |
+          docker build \
+            --build-arg VITE_API_URL=https://${{ env.SERVICE_NAME }}-${{ secrets.GCP_RUN_URL_SUFFIX }}.a.run.app/api/v1 \
+            -t ${GAR_LOCATION}-docker.pkg.dev/${{ env.PROJECT_ID }}/greensteps/${{ env.CLIENT_SERVICE_NAME }}:${{ github.sha }} ./frontend
+          docker push ${GAR_LOCATION}-docker.pkg.dev/${{ env.PROJECT_ID }}/greensteps/${{ env.CLIENT_SERVICE_NAME }}:${{ github.sha }}
+
+      - name: Deploy Frontend Service to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.CLIENT_SERVICE_NAME }}
+          region: ${{ env.GAR_LOCATION }}
+          image: ${GAR_LOCATION}-docker.pkg.dev/${{ env.PROJECT_ID }}/greensteps/${{ env.CLIENT_SERVICE_NAME }}:${{ github.sha }}
