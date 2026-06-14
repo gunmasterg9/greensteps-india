@@ -1,32 +1,36 @@
-# Stage 1: Build the static bundle
+# ─── Stage 1: Build React + Vite bundle ────────────────────────────────────────
 FROM node:18-alpine AS builder
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy manifests
+# Install dependencies first (layer cache optimization)
 COPY package*.json ./
-
-# Install all dependencies (dev required for Vite build)
 RUN npm ci
 
-# Copy source code files
+# Copy source files
 COPY . .
 
-# Set API URL for the build
+# Accept dynamic API URL at build time
 ARG VITE_API_URL=http://localhost:5000/api/v1
 ENV VITE_API_URL=$VITE_API_URL
 
-# Compile static assets
+# Build production bundle
 RUN npm run build
 
-# Stage 2: Serve compiled assets using Nginx
+# ─── Stage 2: Serve via Nginx ───────────────────────────────────────────────────
 FROM nginx:1.25-alpine
 
-# Copy built bundle from builder stage to Nginx content root
-COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
+# Copy custom Nginx config (SPA routing + gzip + security headers)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose Nginx port
+# Copy compiled React bundle from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Cloud Run listens on port 80
 EXPOSE 80
 
-# Start Nginx
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget -qO- http://localhost:80/health || exit 1
+
 CMD ["nginx", "-g", "daemon off;"]

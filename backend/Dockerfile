@@ -1,24 +1,34 @@
-# Use lightweight production Node LTS image
+# ─── Production Node.js Backend ────────────────────────────────────────────────
 FROM node:18-alpine
 
-# Set working directory
-WORKDIR /usr/src/app
+# Install dumb-init for proper PID 1 signal handling
+RUN apk add --no-cache dumb-init
 
-# Copy dependency manifests
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodeuser -u 1001 -G nodejs
+
+WORKDIR /app
+
+# Copy and install production dependencies only
 COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
 
-# Install production dependencies only
-RUN npm ci --only=production
-
-# Copy source code files
+# Copy source code
 COPY src/ ./src/
 
-# Expose API port
-EXPOSE 5000
+# Switch to non-root user
+USER nodeuser
 
-# Set production environment variables
+# Cloud Run listens on PORT env variable (default 5000)
+EXPOSE 5000
 ENV PORT=5000
 ENV NODE_ENV=production
 
-# Start Express server
-CMD ["npm", "start"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:$PORT/health || exit 1
+
+# Use dumb-init to handle signals correctly
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "src/index.js"]

@@ -1,27 +1,48 @@
 steps:
-  # 1. Build Docker image with VITE_API_URL substitution argument
+  # Step 1: Build Docker image with dynamic API URL
   - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'build',
-      '--build-arg', 'VITE_API_URL=${_API_URL}',
-      '-t', 'gcr.io/${PROJECT_ID}/greensteps-web',
-      '.'
-    ]
-  
-  # 2. Push Docker image to Container Registry
+    id: 'build-frontend'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'VITE_API_URL=${_API_URL}'
+      - '-t'
+      - '${_GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/greensteps-web:${COMMIT_SHA}'
+      - '-t'
+      - '${_GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/greensteps-web:latest'
+      - './frontend'
+
+  # Step 2: Push image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/${PROJECT_ID}/greensteps-web']
-  
-  # 3. Deploy image to Google Cloud Run
+    id: 'push-frontend'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/greensteps-web'
+
+  # Step 3: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-frontend'
     entrypoint: gcloud
-    args: [
-      'run', 'deploy', 'greensteps-web',
-      '--image', 'gcr.io/${PROJECT_ID}/greensteps-web',
-      '--region', 'asia-south1',
-      '--platform', 'managed',
-      '--allow-unauthenticated'
-    ]
+    args:
+      - 'run'
+      - 'deploy'
+      - 'greensteps-web'
+      - '--image=${_GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/greensteps-web:${COMMIT_SHA}'
+      - '--region=${_GAR_LOCATION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=80'
+      - '--memory=256Mi'
+      - '--max-instances=5'
+
+substitutions:
+  _GAR_LOCATION: asia-south1
+  _REPOSITORY: greensteps
+  _API_URL: https://greensteps-api-placeholder.a.run.app/api/v1
 
 images:
-  - 'gcr.io/${PROJECT_ID}/greensteps-web'
+  - '${_GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/greensteps-web:${COMMIT_SHA}'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
