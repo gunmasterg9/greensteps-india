@@ -1,5 +1,5 @@
 steps:
-  # Step 1: Build Docker image with dynamic API URL
+  # Step 1: Build frontend Docker image
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-frontend'
     args:
@@ -7,18 +7,15 @@ steps:
       - '--build-arg'
       - 'VITE_API_URL=${_API_URL}'
       - '-t'
-      - '${_GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/greensteps-web:${COMMIT_SHA}'
-      - '-t'
-      - '${_GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/greensteps-web:latest'
-      - './frontend'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/greensteps/greensteps-web:latest'
+      - '.'
 
-  # Step 2: Push image to Artifact Registry
+  # Step 2: Push to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-frontend'
     args:
       - 'push'
-      - '--all-tags'
-      - '${_GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/greensteps-web'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/greensteps/greensteps-web:latest'
 
   # Step 3: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -28,8 +25,8 @@ steps:
       - 'run'
       - 'deploy'
       - 'greensteps-web'
-      - '--image=${_GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/greensteps-web:${COMMIT_SHA}'
-      - '--region=${_GAR_LOCATION}'
+      - '--image=asia-south1-docker.pkg.dev/$PROJECT_ID/greensteps/greensteps-web:latest'
+      - '--region=asia-south1'
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--port=80'
@@ -37,12 +34,10 @@ steps:
       - '--max-instances=5'
 
 substitutions:
-  _GAR_LOCATION: asia-south1
-  _REPOSITORY: greensteps
   _API_URL: https://greensteps-api-placeholder.a.run.app/api/v1
 
 images:
-  - '${_GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/greensteps-web:${COMMIT_SHA}'
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/greensteps/greensteps-web:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY

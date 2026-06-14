@@ -1,0 +1,14 @@
+# Exclude local dev files from Cloud Build upload
+node_modules/
+npm-debug.log
+.env
+.env.local
+*.log
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
