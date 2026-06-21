@@ -35,10 +35,10 @@ jobs:
             frontend/package-lock.json
 
       - name: Install backend dependencies
-        run: cd backend && npm ci
+        run: cd backend && npm install
 
       - name: Install frontend dependencies
-        run: cd frontend && npm ci
+        run: cd frontend && npm install
 
       - name: Run Backend Tests
         run: cd backend && npm test
