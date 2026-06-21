@@ -40,6 +40,12 @@ jobs:
       - name: Install frontend dependencies
         run: cd frontend && npm ci
 
+      - name: Run Backend Tests
+        run: cd backend && npm test
+
+      - name: Run Frontend Tests
+        run: cd frontend && npm run test
+
       - name: Build frontend bundle
         run: cd frontend && npm run build
         env:

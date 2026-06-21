@@ -69,7 +69,7 @@ export default function Register() {
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <label htmlFor="name" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Full Name
             </label>
             <div className="relative">
@@ -77,6 +77,7 @@ export default function Register() {
                 <User className="w-4 h-4" />
               </span>
               <input
+                id="name"
                 type="text"
                 placeholder="Rahul Kumar"
                 value={name}
@@ -87,7 +88,7 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <label htmlFor="email" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Email Address
             </label>
             <div className="relative">
@@ -95,6 +96,7 @@ export default function Register() {
                 <Mail className="w-4 h-4" />
               </span>
               <input
+                id="email"
                 type="email"
                 placeholder="rahul@example.com"
                 value={email}
@@ -105,7 +107,7 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <label htmlFor="password" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Password
             </label>
             <div className="relative">
@@ -113,6 +115,7 @@ export default function Register() {
                 <Lock className="w-4 h-4" />
               </span>
               <input
+                id="password"
                 type="password"
                 placeholder="Min 6 characters"
                 value={password}
@@ -124,7 +127,7 @@ export default function Register() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+              <label htmlFor="state" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
                 State / UT
               </label>
               <div className="relative">
@@ -132,6 +135,7 @@ export default function Register() {
                   <MapPin className="w-3.5 h-3.5" />
                 </span>
                 <select
+                  id="state"
                   value={selectedState}
                   onChange={handleStateChange}
                   className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all bg-white/70 text-sm appearance-none"
@@ -145,7 +149,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+              <label htmlFor="city" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
                 City / District
               </label>
               <div className="relative">
@@ -153,6 +157,7 @@ export default function Register() {
                   <MapPin className="w-3.5 h-3.5" />
                 </span>
                 <select
+                  id="city"
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
                   disabled={!selectedState}

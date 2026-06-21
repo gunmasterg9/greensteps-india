@@ -67,9 +67,11 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-  console.log(`🚀 GreenSteps India Backend running on port ${PORT}`);
-  console.log(`📡 API URL: http://localhost:${PORT}/api/v1`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`🚀 GreenSteps India Backend running on port ${PORT}`);
+    console.log(`📡 API URL: http://localhost:${PORT}/api/v1`);
+  });
+}
 
 module.exports = app; // export for testing

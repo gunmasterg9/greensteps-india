@@ -54,7 +54,7 @@ export default function AppLayout({ children }) {
           <Leaf className="w-6 h-6 text-brand-400 fill-brand-400/20" />
           <span className="font-bold text-lg tracking-tight">GreenSteps India</span>
         </div>
-        <button onClick={toggleSidebar} className="text-white hover:text-brand-300">
+        <button onClick={toggleSidebar} aria-label={sidebarOpen ? "Close sidebar menu" : "Open sidebar menu"} className="text-white hover:text-brand-300">
           {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </header>

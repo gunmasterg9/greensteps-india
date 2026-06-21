@@ -129,10 +129,41 @@ router.get('/', auth, async (req, res) => {
     const userActs = mockStore.activities.filter(a => a.userId === req.user._id);
     // Sort by date descending
     userActs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    if (req.query.page || req.query.limit) {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const startIndex = (page - 1) * limit;
+      const paginatedActs = userActs.slice(startIndex, startIndex + limit);
+      return res.json({
+        activities: paginatedActs,
+        total: userActs.length,
+        page,
+        pages: Math.ceil(userActs.length / limit)
+      });
+    }
+
     return res.json(userActs);
   }
 
   try {
+    if (req.query.page || req.query.limit) {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const startIndex = (page - 1) * limit;
+      const total = await Activity.countDocuments({ userId: req.user._id });
+      const activities = await Activity.find({ userId: req.user._id })
+        .sort({ date: -1 })
+        .skip(startIndex)
+        .limit(limit);
+      return res.json({
+        activities,
+        total,
+        page,
+        pages: Math.ceil(total / limit)
+      });
+    }
+
     const activities = await Activity.find({ userId: req.user._id }).sort({ date: -1 });
     res.json(activities);
   } catch (error) {

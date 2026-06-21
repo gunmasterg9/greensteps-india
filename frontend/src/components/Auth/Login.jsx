@@ -97,7 +97,7 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <label htmlFor="email" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Email Address
             </label>
             <div className="relative">
@@ -105,6 +105,7 @@ export default function Login() {
                 <Mail className="w-4 h-4" />
               </span>
               <input
+                id="email"
                 type="email"
                 placeholder="citizen@greensteps.in"
                 value={email}
@@ -115,7 +116,7 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <label htmlFor="password" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Password
             </label>
             <div className="relative">
@@ -123,6 +124,7 @@ export default function Login() {
                 <Lock className="w-4 h-4" />
               </span>
               <input
+                id="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
@@ -154,6 +156,7 @@ export default function Login() {
         <button
           onClick={handleGoogleLogin}
           disabled={authLoading}
+          aria-label="Sign in with Google Account"
           className="w-full py-2.5 border border-slate-200 hover:bg-slate-50 bg-white font-medium text-slate-700 rounded-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-sm disabled:opacity-50"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">

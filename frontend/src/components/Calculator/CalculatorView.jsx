@@ -136,10 +136,11 @@ export default function CalculatorView() {
 
               <div className="space-y-2">
                 <div className="flex justify-between font-bold text-sm text-slate-700">
-                  <span>Monthly Travel Distance:</span>
+                  <label htmlFor="transport-distance">Monthly Travel Distance:</label>
                   <span className="text-brand-600">{inputs.transport.value} km</span>
                 </div>
                 <input
+                  id="transport-distance"
                   type="range"
                   min="0"
                   max="5000"
@@ -198,10 +199,11 @@ export default function CalculatorView() {
 
               <div className="space-y-2">
                 <div className="flex justify-between font-bold text-sm text-slate-700">
-                  <span>Monthly Electricity Power:</span>
+                  <label htmlFor="electricity-power">Monthly Electricity Power:</label>
                   <span className="text-brand-600">{inputs.electricity.value} Units (kWh)</span>
                 </div>
                 <input
+                  id="electricity-power"
                   type="range"
                   min="0"
                   max="1000"
@@ -236,10 +238,11 @@ export default function CalculatorView() {
 
               <div className="space-y-2">
                 <div className="flex justify-between font-bold text-sm text-slate-700">
-                  <span>Domestic LPG Cylinders:</span>
+                  <label htmlFor="lpg-cylinders">Domestic LPG Cylinders:</label>
                   <span className="text-brand-600">{inputs.lpg.value} cylinder{inputs.lpg.value !== 1 ? 's' : ''}</span>
                 </div>
                 <input
+                  id="lpg-cylinders"
                   type="range"
                   min="0"
                   max="5"
@@ -314,10 +317,11 @@ export default function CalculatorView() {
 
               <div className="space-y-2">
                 <div className="flex justify-between font-bold text-sm text-slate-700">
-                  <span>New Purchases / Month:</span>
+                  <label htmlFor="shopping-items">New Purchases / Month:</label>
                   <span className="text-brand-600">{inputs.shopping.value} items</span>
                 </div>
                 <input
+                  id="shopping-items"
                   type="range"
                   min="0"
                   max="30"
@@ -352,10 +356,11 @@ export default function CalculatorView() {
 
               <div className="space-y-2">
                 <div className="flex justify-between font-bold text-sm text-slate-700">
-                  <span>Weekly Waste Weight:</span>
+                  <label htmlFor="waste-weight">Weekly Waste Weight:</label>
                   <span className="text-brand-600">{inputs.waste.value} kg</span>
                 </div>
                 <input
+                  id="waste-weight"
                   type="range"
                   min="0"
                   max="50"

@@ -21,6 +21,10 @@ export default function TrackerView() {
   const { token, updateUserProfile } = useAuth();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const limit = 10;
   
   // Form States
   const [category, setCategory] = useState('transport');
@@ -33,15 +37,17 @@ export default function TrackerView() {
   const [errorMessage, setErrorMessage] = useState('');
 
   // Fetch activities on load
-  const fetchActivities = async () => {
+  const fetchActivities = async (currentPage = page) => {
     if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/activities`, {
+      const res = await fetch(`${API_URL}/activities?page=${currentPage}&limit=${limit}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        setActivities(data);
+        setActivities(data.activities || []);
+        setTotalPages(data.pages || 1);
+        setTotalCount(data.total || 0);
       }
     } catch (err) {
       console.error('Error loading tracker logs:', err);
@@ -51,8 +57,8 @@ export default function TrackerView() {
   };
 
   useEffect(() => {
-    fetchActivities();
-  }, [token]);
+    fetchActivities(page);
+  }, [token, page]);
 
   // Handle category swap (adjusts units and default subtypes)
   const handleCategoryChange = (cat) => {
@@ -116,7 +122,8 @@ export default function TrackerView() {
         setValue('');
         
         // Refresh logs list
-        fetchActivities();
+        setPage(1);
+        fetchActivities(1);
 
         // Also fetch profile update status to refresh local user context green points!
         const profileRes = await fetch(`${API_URL}/users/profile`, {
@@ -168,6 +175,7 @@ export default function TrackerView() {
                 key={cat}
                 type="button"
                 onClick={() => handleCategoryChange(cat)}
+                aria-label={`Select category ${cat === 'lpg' ? 'LPG' : cat}`}
                 className={`
                   py-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer text-xs font-bold
                   ${isSelected 
@@ -199,7 +207,7 @@ export default function TrackerView() {
           
           {/* Dynamic input label / suboptions */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+            <label htmlFor="activity-value" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
               {category === 'transport' && 'Distance Travelled (km)'}
               {category === 'electricity' && 'Power Consumed (kWh / Units)'}
               {category === 'lpg' && 'Cylinders Consumed'}
@@ -209,6 +217,7 @@ export default function TrackerView() {
             </label>
             <div className="relative">
               <input
+                id="activity-value"
                 type="number"
                 step="any"
                 placeholder="e.g. 15"
@@ -225,8 +234,9 @@ export default function TrackerView() {
           {/* Type Subselection */}
           {category === 'transport' && (
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Transit Vehicle Type</label>
+              <label htmlFor="transit-type" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Transit Vehicle Type</label>
               <select
+                id="transit-type"
                 value={subtype}
                 onChange={(e) => setSubtype(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white/70 text-sm"
@@ -243,8 +253,9 @@ export default function TrackerView() {
 
           {category === 'food' && (
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Meal Preference Type</label>
+              <label htmlFor="meal-type" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Meal Preference Type</label>
               <select
+                id="meal-type"
                 value={subtype}
                 onChange={(e) => setSubtype(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white/70 text-sm"
@@ -258,8 +269,9 @@ export default function TrackerView() {
 
           {category === 'waste' && (
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Waste Treatment Type</label>
+              <label htmlFor="waste-type" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Waste Treatment Type</label>
               <select
+                id="waste-type"
                 value={subtype}
                 onChange={(e) => setSubtype(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white/70 text-sm"
@@ -299,7 +311,7 @@ export default function TrackerView() {
             <p className="text-xs text-slate-500 mt-1">Audit trail of all your logged actions.</p>
           </div>
           <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 border rounded-lg text-slate-600">
-            {activities.length} Total Logs
+            {totalCount} Total Logs
           </span>
         </div>
 
@@ -357,6 +369,31 @@ export default function TrackerView() {
                 })}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-between items-center mt-5 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setPage(p => Math.max(p - 1, 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 font-semibold rounded-lg text-2xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="text-2xs font-semibold text-slate-500">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+                  disabled={page === totalPages}
+                  className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 font-semibold rounded-lg text-2xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         )}
 
