@@ -10,6 +10,9 @@
     "preview": "vite preview",
     "test": "vitest run"
   },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@vitejs/plugin-react": "^4.2.1",
     "firebase": "^10.9.0",
