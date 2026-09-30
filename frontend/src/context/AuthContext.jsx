@@ -100,26 +100,41 @@ export function AuthProvider({ children }) {
         const formattedName = mockName.charAt(0).toUpperCase() + mockName.slice(1);
         const mockToken = `mock-token-${email}|${formattedName}`;
         
-        // Fetch to trigger sync on server in-memory database
-        const res = await fetch(`${API_URL}/auth/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${mockToken}`
-          }
-        });
+        let loggedInUser = {
+          uid: `mock-${Date.now()}`,
+          email,
+          name: formattedName,
+          role: email.includes('admin') ? 'admin' : 'citizen',
+          state: 'Maharashtra',
+          city: 'Mumbai',
+          carbonGoal: 1500,
+          points: 250
+        };
 
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-          setToken(mockToken);
-          localStorage.setItem('gs_token', mockToken);
-          localStorage.setItem('gs_user', JSON.stringify(data.user));
-          setLoading(false);
-          return { success: true };
-        } else {
-          throw new Error('Server mock verification failed');
+        // Try syncing with backend if reachable
+        try {
+          const res = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${mockToken}`
+            }
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.user) loggedInUser = data.user;
+          }
+        } catch (fetchErr) {
+          console.warn('Backend unavailable, proceeding with local mock user session.');
         }
+
+        setUser(loggedInUser);
+        setToken(mockToken);
+        localStorage.setItem('gs_token', mockToken);
+        localStorage.setItem('gs_user', JSON.stringify(loggedInUser));
+        setLoading(false);
+        return { success: true };
       } else {
         await signInWithEmailAndPassword(auth, email, password);
         return { success: true };
@@ -136,41 +151,51 @@ export function AuthProvider({ children }) {
     try {
       if (isMock) {
         const mockToken = `mock-token-${email}|${name}`;
-        
-        // Sync with mock/live DB to create profile first
-        // We PUT the state/city details during the first login callback
-        const registerResponse = await fetch(`${API_URL}/auth/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${mockToken}`
-          }
-        });
+        let registeredUser = {
+          uid: `mock-${Date.now()}`,
+          email,
+          name,
+          role: email.includes('admin') ? 'admin' : 'citizen',
+          state: state || 'Maharashtra',
+          city: city || 'Mumbai',
+          carbonGoal: 1500,
+          points: 100
+        };
 
-        if (registerResponse.ok) {
-          const registerData = await registerResponse.json();
-          
-          // Now update details
-          const updateRes = await fetch(`${API_URL}/users/profile`, {
-            method: 'PUT',
+        try {
+          const registerResponse = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${mockToken}`
-            },
-            body: JSON.stringify({ name, state, city })
+            }
           });
 
-          if (updateRes.ok) {
-            const updatedData = await updateRes.json();
-            setUser(updatedData.user);
-            setToken(mockToken);
-            localStorage.setItem('gs_token', mockToken);
-            localStorage.setItem('gs_user', JSON.stringify(updatedData.user));
-            setLoading(false);
-            return { success: true };
+          if (registerResponse.ok) {
+            const updateRes = await fetch(`${API_URL}/users/profile`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${mockToken}`
+              },
+              body: JSON.stringify({ name, state, city })
+            });
+
+            if (updateRes.ok) {
+              const updatedData = await updateRes.json();
+              if (updatedData.user) registeredUser = updatedData.user;
+            }
           }
+        } catch (err) {
+          console.warn('Backend unavailable during mock registration, stored locally.');
         }
-        throw new Error('Server registration sync failed');
+
+        setUser(registeredUser);
+        setToken(mockToken);
+        localStorage.setItem('gs_token', mockToken);
+        localStorage.setItem('gs_user', JSON.stringify(registeredUser));
+        setLoading(false);
+        return { success: true };
       } else {
         // 1. Create firebase auth user
         const credential = await createUserWithEmailAndPassword(auth, email, password);
@@ -223,26 +248,40 @@ export function AuthProvider({ children }) {
         const email = 'google.citizen@greensteps.in';
         const name = 'Google Green Citizen';
         const mockToken = `mock-token-${email}|${name}`;
+        let loggedInUser = {
+          uid: `mock-google-${Date.now()}`,
+          email,
+          name,
+          role: 'citizen',
+          state: 'Maharashtra',
+          city: 'Mumbai',
+          carbonGoal: 1500,
+          points: 300
+        };
 
-        const res = await fetch(`${API_URL}/auth/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${mockToken}`
+        try {
+          const res = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${mockToken}`
+            }
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.user) loggedInUser = data.user;
           }
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-          setToken(mockToken);
-          localStorage.setItem('gs_token', mockToken);
-          localStorage.setItem('gs_user', JSON.stringify(data.user));
-          setLoading(false);
-          return { success: true };
-        } else {
-          throw new Error('Google mock verification failed');
+        } catch (fetchErr) {
+          console.warn('Backend unavailable, using local google mock session.');
         }
+
+        setUser(loggedInUser);
+        setToken(mockToken);
+        localStorage.setItem('gs_token', mockToken);
+        localStorage.setItem('gs_user', JSON.stringify(loggedInUser));
+        setLoading(false);
+        return { success: true };
       } else {
         await signInWithPopup(auth, googleProvider);
         return { success: true };

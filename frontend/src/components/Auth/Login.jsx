@@ -40,6 +40,7 @@ export default function Login() {
   };
 
   const autofillMock = (type) => {
+    setError('');
     if (type === 'user') {
       setEmail('citizen@greensteps.in');
       setPassword('password123');
@@ -73,14 +74,16 @@ export default function Login() {
             We have bypassed live Firebase verification. You can log in using any credentials or quick click below:
             <div className="flex gap-2 mt-2">
               <button 
+                type="button"
                 onClick={() => autofillMock('user')}
-                className="px-2 py-1 bg-brand-200 hover:bg-brand-300 font-semibold text-brand-900 rounded transition-colors"
+                className="px-2.5 py-1.5 bg-brand-200 hover:bg-brand-300 font-semibold text-brand-900 rounded-lg transition-colors cursor-pointer"
               >
                 Standard Citizen
               </button>
               <button 
+                type="button"
                 onClick={() => autofillMock('admin')}
-                className="px-2 py-1 bg-amber-200 hover:bg-amber-300 font-semibold text-amber-900 rounded transition-colors"
+                className="px-2.5 py-1.5 bg-amber-200 hover:bg-amber-300 font-semibold text-amber-900 rounded-lg transition-colors cursor-pointer"
               >
                 App Admin
               </button>
@@ -89,9 +92,16 @@ export default function Login() {
         )}
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm flex items-start gap-2">
+            <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">{error}</p>
+              {error === 'Please fill in all fields.' && isMock && (
+                <p className="text-xs text-red-500 mt-1">
+                  💡 <strong>Tip:</strong> Click the green <strong>"Standard Citizen"</strong> button above to auto-fill.
+                </p>
+              )}
+            </div>
           </div>
         )}
 
@@ -109,7 +119,7 @@ export default function Login() {
                 type="email"
                 placeholder="citizen@greensteps.in"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); if (error) setError(''); }}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all bg-white/70"
               />
             </div>
@@ -128,7 +138,7 @@ export default function Login() {
                 type="password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); if (error) setError(''); }}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all bg-white/70"
               />
             </div>
